@@ -28,7 +28,7 @@ body{
   margin:0; 
   display:grid;
   /* MODIFIED: Card 6 (Other Charges) is now position 1 (1.3fr) and Card 1 (Print Charges) is now position 6 (1fr). */
-  grid-template-columns:1.2fr 1.7fr 0.7fr 0.7fr 0.7fr 1.3fr; 
+  grid-template-columns:1.2fr 1.7fr 0.7fr 0.45fr 0.45fr 1.3fr; 
   gap:6px;
 }
 .container{
@@ -212,6 +212,14 @@ html, body{
   height:100vh;
   transform-origin: top center;
 }
+
+/* PATCH: reduce width of Card 4 and Card 5 */
+.wrapper > .container:nth-child(4),
+.wrapper > .container:nth-child(5){
+  max-width: 140px;
+  justify-self: center;
+}
+
 </style>
 
 </head>
@@ -351,15 +359,7 @@ html, body{
       <div>2</div>
     </h3>
 
-    <div class="pdf-copy-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-      <input type="number" oninput="calcPdfTotalCopy()">
-      <input type="number" oninput="calcPdfTotalCopy()">
-      <input type="number" oninput="calcPdfTotalCopy()">
-      <input type="number" oninput="calcPdfTotalCopy()">
-      <input type="number" oninput="calcPdfTotalCopy()">
-      <input type="number" oninput="calcPdfTotalCopy()">
-      <input type="number" oninput="calcPdfTotalCopy()">
-      <input type="number" oninput="calcPdfTotalCopy()">
+    <div class="pdf-copy-grid" style="display:grid;grid-template-columns:1fr;gap:8px;">
       <input type="number" oninput="calcPdfTotalCopy()">
       <input type="number" oninput="calcPdfTotalCopy()">
       <input type="number" oninput="calcPdfTotalCopy()">
@@ -388,15 +388,7 @@ html, body{
       <div>3</div>
     </h3>
 
-    <div class="pdf-copy-grid-2" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-      <input type="number" oninput="calcPdfTotalCopy2()">
-      <input type="number" oninput="calcPdfTotalCopy2()">
-      <input type="number" oninput="calcPdfTotalCopy2()">
-      <input type="number" oninput="calcPdfTotalCopy2()">
-      <input type="number" oninput="calcPdfTotalCopy2()">
-      <input type="number" oninput="calcPdfTotalCopy2()">
-      <input type="number" oninput="calcPdfTotalCopy2()">
-      <input type="number" oninput="calcPdfTotalCopy2()">
+    <div class="pdf-copy-grid-2" style="display:grid;grid-template-columns:1fr;gap:8px;">
       <input type="number" oninput="calcPdfTotalCopy2()">
       <input type="number" oninput="calcPdfTotalCopy2()">
       <input type="number" oninput="calcPdfTotalCopy2()">

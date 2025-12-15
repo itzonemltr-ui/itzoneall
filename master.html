@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Office Tools</title>
+
+<!-- FAVICON -->
+<link rel="icon" type="image/png" href="favicon.png">
+
+<style>
+:root{
+  --bg:#f1f5f9;
+
+  /* LIGHT BLUE SIDEBAR THEME */
+  --sidebar:#e0f2fe;
+  --item:#bae6fd;
+  --active:#38bdf8;
+  --text:#0f172a;
+  --active-text:#020617;
+  --border:#7dd3fc;
+}
+
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  font-family:system-ui, Arial, sans-serif;
+  background:var(--bg);
+}
+
+.app{
+  display:flex;
+  height:100vh;
+}
+
+/* LEFT SIDEBAR */
+.sidebar{
+  width:220px;
+  background:var(--sidebar);
+  padding:16px 12px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  box-shadow:4px 0 14px rgba(2,132,199,.25);
+}
+
+.brand{
+  color:var(--text);
+  font-weight:700;
+  font-size:18px;
+  padding:10px 12px 18px;
+  text-align:center;
+}
+
+.nav-btn{
+  padding:12px 14px;
+  border:2px solid var(--border);
+  border-radius:12px;
+  background:var(--item);
+  color:var(--text);
+  font-size:15px;
+  font-weight:600;
+  cursor:pointer;
+  text-align:center;
+}
+
+.nav-btn.active{
+  background:var(--active);
+  color:var(--active-text);
+  border-color:var(--active);
+}
+
+/* CONTENT */
+.content{
+  flex:1;
+  background:#ffffff;
+}
+
+iframe{
+  width:100%;
+  height:100%;
+  border:none;
+  display:none;
+}
+
+/* MOBILE */
+@media(max-width:800px){
+  .sidebar{
+    width:64px;
+    padding:12px 8px;
+  }
+  .brand{
+    display:none;
+  }
+  .nav-btn{
+    padding:12px 0;
+    font-size:14px;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div class="app">
+
+  <div class="sidebar">
+    <div class="brand">TOOLS</div>
+    <button class="nav-btn active" onclick="showPage(1)">Price</button>
+    <button class="nav-btn" onclick="showPage(2)">PDF</button>
+    <button class="nav-btn" onclick="showPage(3)">PVC</button>
+  </div>
+
+  <div class="content">
+    <iframe id="page1" src="price.html"></iframe>
+    <iframe id="page2" src="pdf converter.html"></iframe>
+    <iframe id="page3" src="pvc.html"></iframe>
+  </div>
+
+</div>
+
+<script>
+function showPage(n){
+  document.querySelectorAll('iframe').forEach(f=>f.style.display='none');
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page'+n).style.display='block';
+  document.querySelectorAll('.nav-btn')[n-1].classList.add('active');
+}
+showPage(1);
+</script>
+
+</body>
+</html>
