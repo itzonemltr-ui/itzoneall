@@ -1,0 +1,351 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Image Merge PDF Tool — High Resolution (Scale 3)</title>
+  <style>
+    body{font-family:Inter,system-ui,Arial;margin:20px;background:#f3f6fb;color:#0b1220}
+    .card{max-width:980px;margin:0 auto;background:#fff;padding:18px;border-radius:10px;box-shadow:0 6px 18px rgba(12,20,35,0.08)}
+    .row{display:flex;gap:12px;flex-wrap:wrap}
+    .uploader{flex:1;min-width:220px;padding:12px;border:1px dashed #cbd5e1;border-radius:8px;text-align:center;background:#fcfeff}
+    input[type=file]{display:none}
+    label.btn{display:inline-block;padding:8px 12px;border-radius:6px;background:#0ea5a3;color:#fff;cursor:pointer;margin-top:8px}
+    .preview{margin-top:14px;padding:12px;border-radius:8px;background:#0b122020;display:flex;gap:8px;align-items:center;justify-content:center;height:360px}
+    .cell{
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #fff;
+      border-radius: 6px;
+      border: 1px solid #e6eef8;
+      height: 100%;
+      overflow: hidden;
+      position: relative;
+      padding: 0;
+      cursor: pointer;
+    }
+    .cell img{
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+      user-select: none;
+      pointer-events: none;
+    }
+    .controls{display:flex;gap:8px;align-items:center;margin-top:12px;justify-content:flex-end;}
+    button.primary{background:#0ea5a3;border:0;color:#022;padding:10px 14px;border-radius:8px;cursor:pointer}
+    button.secondary{background:#1f2937;border:0;color:#fff;padding:8px 12px;border-radius:8px;cursor:pointer}
+    select{padding:8px;border-radius:6px;border:1px solid #cbd5e1}
+    .note{font-size:13px;color:#475569;margin-top:8px}
+    .cell .label {position:absolute;left:8px;top:8px;font-size:12px;color:#64748b;z-index:2;padding:2px 6px;background:rgba(255,255,255,0.6);border-radius:4px}
+    .placeholder-text{font-size:13px;color:#64748b;padding:12px;text-align:center}
+    body { overflow-y: auto; -webkit-overflow-scrolling: touch; }
+    @media (max-width:640px){
+      .preview{flex-direction:column;height:520px}
+      .cell{width:100%;height:50%}
+    }
+    @media (max-height:760px){
+      .preview { height: 260px !important; }
+    }
+    @media (max-height:480px){
+      .controls{ position: sticky; bottom: 10px; background: transparent; z-index:10; padding-top:8px; }
+      .card { padding-bottom: 64px; }
+    }
+    .hint { font-size:12px;color:#64748b;margin-top:8px }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="row">
+      <div class="uploader" style="flex-basis:320px;">
+        <input id="imgUpload" type="file" accept="image/*" multiple>
+        <label class="btn" for="imgUpload">Choose File</label>
+        <div class="hint">Click a preview to replace that image only.</div>
+      </div>
+
+      <div style="min-width:220px;">
+        <div style="margin-bottom:8px"><strong>Options</strong></div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <label><input id="border" type="checkbox"> Border around images</label>
+          <div>
+            <div style="font-size:13px;margin-bottom:6px">Paper size</div>
+            <select id="paperSize">
+              <option value="a5" selected>A5</option>
+              <option value="a4">A4</option>
+              <option value="letter">Letter</option>
+            </select>
+            <select id="orientation">
+              <option value="landscape" selected>Landscape</option>
+              <option value="portrait">Portrait</option>
+            </select>
+          </div>
+
+        <div style="margin-top:8px">
+          <div style="font-size:13px;margin-bottom:6px"><strong>File name</strong></div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <input id="filenameInput" type="text" placeholder="Type file name (default: PDF)" style="flex:1;padding:8px;border:1px solid #cbd5e1;border-radius:6px" />
+            <select id="filenameSelect" title="Choose default name" style="padding:8px;border-radius:6px;border:1px solid #cbd5e1">
+              <option value="PDF" selected>PDF</option>
+              <option value="Adhaar">Adhaar</option>
+              <option value="Passport">Passport</option>
+              <option value="Pancard">Pancard</option>
+              <option value="DrivingLicense">DrivingLicense</option>
+              <option value="VoterID">VoterID</option>
+            </select>
+          </div>
+
+        </div>
+
+        </div>
+      </div>
+    </div>
+
+    <div class="preview" id="preview" aria-live="polite">
+      <div class="cell" id="cell1" role="button" tabindex="0" aria-label="Image 1 (click to replace)"><div class="label">Image 1</div><div class="placeholder-text">Drop or upload files</div></div>
+      <div class="cell" id="cell2" role="button" tabindex="0" aria-label="Image 2 (click to replace)"><div class="label">Image 2</div><div class="placeholder-text">Drop or upload files</div></div>
+    </div>
+
+    <div class="controls">
+      <button class="primary" id="mergeBtn">Download</button>
+      <button class="secondary" id="clearBtn">Clear</button>
+      </div>
+  </div>
+
+  <input id="replace1" type="file" accept="image/*" style="display:none">
+  <input id="replace2" type="file" accept="image/*" style="display:none">
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <script>
+  (function(){
+    const uploadInput = document.getElementById('imgUpload');
+    const replace1 = document.getElementById('replace1');
+    const replace2 = document.getElementById('replace2');
+    const cell1 = document.getElementById('cell1');
+    const cell2 = document.getElementById('cell2');
+    const mergeBtn = document.getElementById('mergeBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const borderOpt = document.getElementById('border');
+    const paperSize = document.getElementById('paperSize');
+    const orientation = document.getElementById('orientation');
+    const filenameInput = document.getElementById('filenameInput');
+    const filenameSelect = document.getElementById('filenameSelect');
+
+    // currentFiles stores image File objects for [Image1, Image2]
+    let currentFiles = [];
+
+    function setCellPlaceholder(cell, text){
+      cell.innerHTML = '<div class="label">' + (cell.id==='cell1'?'Image 1':'Image 2') + '</div>' +
+                       '<div class="placeholder-text">' + text + '</div>';
+      cell.style.border = borderOpt.checked ? '1px solid #d1d5db' : '1px solid transparent';
+    }
+
+    function setCellImageFromFile(cell, file){
+      cell.innerHTML = '<div class="label">' + (cell.id==='cell1'?'Image 1':'Image 2') + '</div>';
+      if(!file){
+        const p = document.createElement('div');
+        p.className = 'placeholder-text';
+        p.textContent = 'Drop or upload files';
+        cell.appendChild(p);
+        cell.style.border = borderOpt.checked ? '1px solid #d1d5db' : '1px solid transparent';
+        return;
+      }
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.onload = ()=> { URL.revokeObjectURL(url); };
+      img.src = url;
+      img.style.width = '100%';
+      img.style.height = '100%';
+      img.style.objectFit = 'contain';
+      img.alt = file.name || 'uploaded image';
+      cell.appendChild(img);
+      cell.style.border = borderOpt.checked ? '1px solid #d1d5db' : '1px solid transparent';
+    }
+
+    function updateMainInputFileList(){
+      try{
+        const dt = new DataTransfer();
+        currentFiles.forEach(f => { if(f) dt.items.add(f); });
+        uploadInput.files = dt.files;
+      }catch(e){
+        // Not critical if browser prevents updating FileList; merge uses currentFiles directly.
+      }
+    }
+
+    function fileToImage(file){
+      if(!file) return Promise.resolve(null);
+      return new Promise((resolve,reject)=>{
+        const reader = new FileReader();
+        reader.onload = ()=> {
+          const img = new Image();
+          img.onload = ()=> resolve(img);
+          img.onerror = err => reject(err);
+          img.src = reader.result;
+        };
+        reader.onerror = err => reject(err);
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function sortFilesByTime(files){
+      return Array.from(files).sort((a,b)=> a.lastModified - b.lastModified);
+    }
+
+    uploadInput.addEventListener('change', ()=> {
+      const files = Array.from(uploadInput.files || []);
+      if(files.length === 0){
+        currentFiles = [];
+        setCellPlaceholder(cell1, 'Drop or upload files');
+        setCellPlaceholder(cell2, 'Drop or upload files');
+        return;
+      }
+      const sorted = sortFilesByTime(files);
+      currentFiles = [sorted[0] || null, sorted[1] || null];
+      setCellImageFromFile(cell1, currentFiles[0]);
+      setCellImageFromFile(cell2, currentFiles[1]);
+      updateMainInputFileList();
+    });
+
+    ['dragenter','dragover'].forEach(ev => {
+      [cell1, cell2].forEach(c => c.addEventListener(ev, e => { e.preventDefault(); c.style.background='#eef2ff'; }));
+    });
+    ['dragleave','drop'].forEach(ev => {
+      [cell1, cell2].forEach(c => c.addEventListener(ev, e => { e.preventDefault(); c.style.background=''; }));
+    });
+    [cell1, cell2].forEach(c => {
+      c.addEventListener('drop', async e => {
+        const dtFiles = e.dataTransfer.files;
+        if(!dtFiles || dtFiles.length === 0) return;
+        const combined = [...(uploadInput.files ? Array.from(uploadInput.files) : []), ...Array.from(dtFiles)];
+        const sorted = sortFilesByTime(combined).slice(0,2);
+        try{
+          const dt = new DataTransfer();
+          sorted.forEach(f=> dt.items.add(f));
+          uploadInput.files = dt.files;
+        }catch(err){}
+        currentFiles = [sorted[0]||null, sorted[1]||null];
+        setCellImageFromFile(cell1, currentFiles[0]);
+        setCellImageFromFile(cell2, currentFiles[1]);
+      });
+    });
+
+    cell1.addEventListener('click', ()=> replace1.click());
+    cell2.addEventListener('click', ()=> replace2.click());
+    [cell1, cell2].forEach(c => c.addEventListener('keydown', e => {
+      if(e.key === 'Enter' || e.key === ' ') { e.preventDefault(); c.click(); }
+    }));
+
+    replace1.addEventListener('change', ()=> {
+      const f = replace1.files && replace1.files[0];
+      if(!f) return;
+      currentFiles[0] = f;
+      setCellImageFromFile(cell1, f);
+      updateMainInputFileList();
+      replace1.value = '';
+    });
+
+    replace2.addEventListener('change', ()=> {
+      const f = replace2.files && replace2.files[0];
+      if(!f) return;
+      currentFiles[1] = f;
+      setCellImageFromFile(cell2, f);
+      updateMainInputFileList();
+      replace2.value = '';
+    });
+
+    if(filenameSelect && filenameInput){
+      filenameSelect.addEventListener('change', function(){ filenameInput.value = this.value; });
+      filenameSelect.addEventListener('click', function(){ filenameInput.value = this.value; });
+    }
+
+    clearBtn.addEventListener('click', ()=> {
+      uploadInput.value = '';
+      replace1.value = '';
+      replace2.value = '';
+      currentFiles = [];
+      setCellPlaceholder(cell1, 'Drop or upload files');
+      setCellPlaceholder(cell2, 'Drop or upload files');
+      updateMainInputFileList();
+    });
+
+    // Merge / Download with increased canvas resolution (scale = 3)
+    mergeBtn.addEventListener('click', async ()=> {
+      let f1 = currentFiles[0] || null;
+      let f2 = currentFiles[1] || null;
+      if(!f1 && uploadInput.files.length>0){
+        const sorted = sortFilesByTime(uploadInput.files);
+        f1 = sorted[0] || null;
+        f2 = sorted[1] || null;
+      }
+      if(!f1 && !f2){ alert('Please choose at least one image.'); return; }
+
+      const i1 = await fileToImage(f1);
+      const i2 = await fileToImage(f2);
+
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF({ unit:'pt', format: paperSize.value, orientation: orientation.value });
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+
+      // <-- OPTION B change: increase scale from 2 to 3 for higher resolution -->
+      const scale = 3;
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.round(pageWidth * scale);
+      canvas.height = Math.round(pageHeight * scale);
+      const ctx = canvas.getContext('2d');
+
+      // white background
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0,0,canvas.width,canvas.height);
+
+      const paddingPt = 18;
+      const padding = paddingPt * scale;
+      const contentHeight = canvas.height - padding*2;
+
+      function drawImageInArea(img, x, y, w, h){
+        if(!img) return;
+        const iw = img.naturalWidth;
+        const ih = img.naturalHeight;
+        // keep a max scale factor of 1 (don't upscale beyond original image size to avoid jaggy upscales)
+        const scaleFactor = Math.min(w / iw, h / ih);
+        const dw = Math.round(iw * scaleFactor);
+        const dh = Math.round(ih * scaleFactor);
+        const dx = Math.round(x + (w - dw)/2);
+        const dy = Math.round(y);
+        if(borderOpt.checked){
+          ctx.strokeStyle = '#cbd5e1';
+          ctx.lineWidth = Math.max(1, Math.round(1 * scale));
+          ctx.strokeRect(dx-4, dy-4, dw+8, dh+8);
+        }
+        ctx.drawImage(img, dx, dy, dw, dh);
+      }
+
+      if(i1 && i2){
+        const halfWidth = Math.floor((canvas.width - padding*3)/2);
+        drawImageInArea(i1, padding, padding, halfWidth, contentHeight);
+        drawImageInArea(i2, padding + halfWidth + padding, padding, halfWidth, contentHeight);
+      } else {
+        const areaW = canvas.width - padding*2;
+        const areaH = contentHeight;
+        drawImageInArea(i1 || i2, padding, padding, areaW, areaH);
+      }
+
+      // Use high-quality JPEG at very high quality — when using increased canvas resolution,
+      // the JPEG artifacts are much less visible. Keeping 'image/jpeg' for smaller file size.
+      const imgData = canvas.toDataURL('image/jpeg', 0.98);
+      pdf.addImage(imgData, 'JPEG', 0, 0, pageWidth, pageHeight);
+
+      let baseName = (filenameInput && filenameInput.value && filenameInput.value.trim()) || (filenameSelect && filenameSelect.value) || 'PDF';
+      if(!/\.pdf$/i.test(baseName)) baseName = baseName + '.pdf';
+      pdf.save(baseName);
+    });
+
+    setCellPlaceholder(cell1, 'Drop or upload files');
+    setCellPlaceholder(cell2, 'Drop or upload files');
+
+  })();
+  </script>
+</body>
+</html>
